@@ -16,7 +16,7 @@ class Question():
     def setFromCsv(self, csvRow):
         self.question = csvRow[0] # TODO: need to be more defensive about this
         self.answer = csvRow[1]
-        self.distractors = csvRow[2].split(', ', 1)
+        self.distractors = csvRow[2].split(', ')
 
     def setFromJson(self, jsonString):
         json.loads(jsonString, self)
@@ -29,7 +29,7 @@ class Question():
             # TODO: exception?
 
     def toJson(self):
-        return json.dumps(self.__dict__)
+        return json.dumps(self.__dict__, indent=4, sort_keys=True) # TODO: not used; remove
 
     def toCsv(self):
         return ''
@@ -44,13 +44,17 @@ class QuestionCollection():
     def __init__(self):
         self._questionsInternal = []
 
-    def toJson(self):
+    def toJson(self): # TODO : clean this up
         jsonString = '['
         jsonSnippets = []
+        jsonSnippets2 = []
         for question in self._questionsInternal:
             jsonSnippets.append(question.toJson())
+            jsonSnippets2.append(question.__dict__)
         jsonString += ','.join(jsonSnippets)
         jsonString += ']'  
+
+        jsonString = json.dumps(jsonSnippets2, indent=4, sort_keys=True)
         return jsonString
 
     def toCsv(self):
@@ -58,6 +62,7 @@ class QuestionCollection():
 
     def addQuestion(self, question):
         self._questionsInternal.append(question)
+
 
 
 class SimpleQuestionRepository():
@@ -68,33 +73,54 @@ class SimpleQuestionRepository():
     """
 
     def __init__(self):
-        self._questionsInternal = QuestionCollection()
+        self._questionsInternal = dict()
         self._nextId = 1
 
     def loadFromFile(self, path):
-        _questionsInternal = []
+        _questionsInternal = dict()
+
         with open(path) as csvFile: # TODO: probably should wrap with a try/catch
+
             csvSniffer = csv.Sniffer()
             sample = csvFile.read(1024)
             dialect = csvSniffer.sniff(sample, '|')
             hasHeader = csvSniffer.has_header(sample)
             csvFile.seek(0)
+
             csvRows = csv.reader(csvFile, dialect, delimiter ='|')
-            rowIndex = 1
+
+            rowIndex = 0
             for row in csvRows:
-                if (hasHeader and rowIndex > 1) or not hasHeader:
-                    question = Question()
-                    question.setFromCsv(row)
-                    question.setIdentity(rowIndex)
-                    self._questionsInternal.addQuestion(question)  # TODO: should probably add the question to an index for things like lookups
                 rowIndex += 1
-        self._nextId += len(_questionsInternal) + 1
+                if (hasHeader and rowIndex == 1):
+                    continue
+                question = Question()
+                question.setFromCsv(row)
+                question.setIdentity(rowIndex)
+                self._questionsInternal.setdefault(question.id, question)
+
+            self._nextId += len(_questionsInternal) + 1
+
 
     def getAll(self):
-        return self._questionsInternal
+        returnCollection = QuestionCollection() 
+        for question in self._questionsInternal.values():
+            returnCollection.addQuestion(question)
+        return returnCollection
+
 
     def getByIds(self, idSet):
-        return self._questionsInternal
+        returnCollection = QuestionCollection()        
+
+        for id in idSet:
+            idValue = int(id)
+            if not idValue in self._questionsInternal:
+                continue
+            question = self._questionsInternal[idValue]
+            returnCollection.addQuestion(question)
+
+        return returnCollection
+
 
 if __name__ == '__main__':
     pass  # TODO: add some tests
