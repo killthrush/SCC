@@ -8,7 +8,6 @@ import testapphelper as h
 app = Flask(__name__)
 
 # TODO:
-# 2) Filtering
 # 3) sorting
 # 5) code TODOs
 # 6) clean up, linting
@@ -25,14 +24,17 @@ def initialize(app):
     repository.loadStateFromFile('./question_state.csv')
 
 
-@app.route('/questions/<ids>/', methods=['GET']) # TODO: resolve duplicate code with getAllQuestions()
+@app.route('/questions/<ids>/', methods=['GET'])
 def getSomeQuestions(ids):
     """
     Returns questions matching the given IDs in JSON format (the default), or in csv format.
         Allowed parameters:
             * fmt: set to 'csv' to return the questions in pipe-delimited format
             * start: set to the ordinal number of the first question to return.  Must appear with num.
-            * num: set to the total number of questions to return.  Must appear with start.            
+            * num: set to the total number of questions to return.  Must appear with start.
+            * qf: set to a string; if the question text contains this string, it will be returned.  Conjunctive with 'af' and 'df' filters.
+            * af: set to a string; if the answer text contains this string, it will be returned.  Conjunctive with 'qf' and 'df' filters.
+            * df: set to a string; if the text of any of the distractors contains this string, it will be returned.  Conjunctive with 'af' and 'qf' filters.
         Returns status 200 along with the formatted question data on success.
         Returns status 400 if the ID list is malformed or if pagination arguments (start, num) are supplied but are invalid.
         Returns status 500 on application error.
@@ -44,7 +46,7 @@ def getSomeQuestions(ids):
     return h.formatQuestionResponse(questions, request)
 
  
-@app.route('/questions/', methods=['GET']) # TODO: resolve duplicate code with getSomeQuestions()
+@app.route('/questions/', methods=['GET'])
 def getAllQuestions():
     """
     Returns all available questions in JSON format (the default), or in csv format.
@@ -52,6 +54,9 @@ def getAllQuestions():
             * fmt: set to 'csv' to return the questions in pipe-delimited format
             * start: set to the ordinal number of the first question to return.  Must appear with num.
             * num: set to the total number of questions to return.  Must appear with start.
+            * qf: set to a string; if the question text contains this string, it will be returned.  Conjunctive with 'af' and 'df' filters.
+            * af: set to a string; if the answer text contains this string, it will be returned.  Conjunctive with 'qf' and 'df' filters.
+            * df: set to a string; if the text of any of the distractors contains this string, it will be returned.  Conjunctive with 'af' and 'qf' filters.
         Returns status 200 along with the formatted question data on success.
         Returns status 400 if pagination arguments (start, num) are supplied but are invalid.
         Returns status 500 on application error.
