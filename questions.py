@@ -18,24 +18,29 @@ class Question():
         self.answer = csvRow[1]
         self.distractors = csvRow[2].split(', ')
 
-    def setFromJson(self, jsonDict): #TODO: these fields are required, should handle badly formatted data more cleanly
+    def trySetFromJson(self, jsonDict):
+        if jsonDict == None or not isinstance(jsonDict, dict):
+            return False
+        if not 'question' in jsonDict or not 'answer' in jsonDict or not 'distractors' in jsonDict:
+            return False
         self.question = jsonDict['question']
         self.answer = jsonDict['answer']
         self.distractors = jsonDict['distractors']
+        return True
 
     def setIdentity(self, idValue):
         if (self.id == None):
             self.id = idValue
         else:
             pass
-            # TODO: exception?
+            # TODO: exception if we try to change an already-set ID?
 
     def toJson(self):
-        return json.dumps(self.__dict__, indent=4, sort_keys=True) # TODO: not used; remove
+        return json.dumps(self.__dict__, indent=4, sort_keys=True)
 
     def toCsv(self):
         distractorsString = ', '.join(self.distractors)
-        return self.id + '|' + self.question + '|' + self.answer + '|' + distractorsString + '\n'
+        return str(self.id) + '|' + self.question + '|' + self.answer + '|' + distractorsString + '\n'
 
 
 class QuestionCollection():
@@ -109,14 +114,14 @@ class SimpleQuestionRepository():
         pass #TODO: implement this as a function of shutting down the app
 
 
-    def getAll(self):
+    def getAll(self): # TODO: should return copies of the questions; we want to avoid side effects
         returnCollection = QuestionCollection() 
         for question in self._questionsInternal.values():
             returnCollection.addQuestion(question)
         return returnCollection
 
 
-    def getById(self, id):
+    def getById(self, id): # TODO: should return copies of the questions; we want to avoid side effects
         idValue = int(id)
         if not idValue in self._questionsInternal:
             return None
@@ -124,7 +129,7 @@ class SimpleQuestionRepository():
         return question
 
 
-    def getByIds(self, idSet):
+    def getByIds(self, idSet): # TODO: should return copies of the questions; we want to avoid side effects
         returnCollection = QuestionCollection()
         for id in idSet:
             question = self.getById(id)
