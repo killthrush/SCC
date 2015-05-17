@@ -8,7 +8,6 @@ import testapphelper as h
 app = Flask(__name__)
 
 # TODO:
-# 3) sorting
 # 5) code TODOs
 # 6) clean up, linting
 # 7) deployment, readme
@@ -35,6 +34,14 @@ def getSomeQuestions(ids):
             * qf: set to a string; if the question text contains this string, it will be returned.  Conjunctive with 'af' and 'df' filters.
             * af: set to a string; if the answer text contains this string, it will be returned.  Conjunctive with 'qf' and 'df' filters.
             * df: set to a string; if the text of any of the distractors contains this string, it will be returned.  Conjunctive with 'af' and 'qf' filters.
+            * sk: set to one of the following to set the sorting key for questions: 
+                * 'i': sort by id (the default)
+                * 'q': sort by question text
+                * 'a': sort by answer text
+                * 'd': sort by the number of distractors
+            * sd: set to one of the following to set the sorting direction for questions: 
+                * 'a': sort ascending (the default)
+                * 'd': sort descending              
         Returns status 200 along with the formatted question data on success.
         Returns status 400 if the ID list is malformed or if pagination arguments (start, num) are supplied but are invalid.
         Returns status 500 on application error.
@@ -57,6 +64,14 @@ def getAllQuestions():
             * qf: set to a string; if the question text contains this string, it will be returned.  Conjunctive with 'af' and 'df' filters.
             * af: set to a string; if the answer text contains this string, it will be returned.  Conjunctive with 'qf' and 'df' filters.
             * df: set to a string; if the text of any of the distractors contains this string, it will be returned.  Conjunctive with 'af' and 'qf' filters.
+            * sk: set to one of the following to set the sorting key for questions: 
+                * 'i': sort by id (the default)
+                * 'q': sort by question text
+                * 'a': sort by answer text
+                * 'd': sort by the number of distractors
+            * sd: set to one of the following to set the sorting direction for questions: 
+                * 'a': sort ascending (the default)
+                * 'd': sort descending             
         Returns status 200 along with the formatted question data on success.
         Returns status 400 if pagination arguments (start, num) are supplied but are invalid.
         Returns status 500 on application error.
@@ -149,15 +164,22 @@ def invokeGetWithFilters(repository, request, ids = None):
     answerFilter = request.args.get('af')
     distractorFilter = request.args.get('df')
 
-    # Sorting key
-    # TODO: implement this
+    # Sorting
+    sortKey = request.args.get('sk')
+    if not isinstance(sortKey, str):
+        sortKey = 'i'
+    sortDirection = request.args.get('sd')
+    if not isinstance(sortDirection, str):
+        sortDirection = 'a'
 
     questions = repository.getWithFilters(idList = idList, 
-                                          startRecord=start, 
-                                          numRecords=num,
-                                          questionFilter=questionFilter,
-                                          answerFilter=answerFilter,
-                                          distractorFilter=distractorFilter)
+                                          startRecord = start, 
+                                          numRecords = num,
+                                          questionFilter = questionFilter,
+                                          answerFilter = answerFilter,
+                                          distractorFilter = distractorFilter,
+                                          sortKey = sortKey,
+                                          sortDescending = (sortDirection == 'd'))
     return questions
 
 

@@ -83,6 +83,13 @@ class SimpleQuestionRepository():
     csv files on disk for persistence.
     """
 
+    _sortFunctions = {
+                        'i':lambda question: question.id,
+                        'q':lambda question: question.question,
+                        'a':lambda question: question.answer,
+                        'd':lambda question: len(question.distractors)
+                     } 
+
     def __init__(self):
         self._questionsInternal = dict()
         self._nextId = 1
@@ -114,7 +121,7 @@ class SimpleQuestionRepository():
         pass #TODO: implement this as a function of shutting down the app
 
 
-    def getById(self, id): # TODO: should return copies of the questions; we want to avoid side effects
+    def getById(self, id):
         idValue = int(id)
         if not idValue in self._questionsInternal:
             return None
@@ -128,7 +135,9 @@ class SimpleQuestionRepository():
                        numRecords = None,
                        questionFilter = None,
                        answerFilter = None,
-                       distractorFilter = None): # TODO: should return copies of the questions; we want to avoid side effects
+                       distractorFilter = None,
+                       sortKey = 'i',
+                       sortDescending = False):
         workingQuestionList = []
 
         # Load main list of questions; this will be filtered further if needed
@@ -137,7 +146,10 @@ class SimpleQuestionRepository():
         else:
             workingQuestionList = list(self._questionsInternal.values()) # this wrapping is necessary for python 3
 
-        # TODO: apply sorting here
+        # Apply sorting
+        if not sortKey.lower() in self._sortFunctions:
+            sortKey = 'i'
+        workingQuestionList = sorted(workingQuestionList, key=self._sortFunctions[sortKey.lower()], reverse=sortDescending)        
 
         # Apply value filters, if needed
         if isinstance(questionFilter, str):
