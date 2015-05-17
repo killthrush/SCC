@@ -50,7 +50,7 @@ def get_some_questions(id_numbers):
             are supplied but are invalid.
         Returns status 500 on application error.
     """
-    invalid_pagination = (h.has_pagination_args(request) and not h.pagination_args_are_valid(request))
+    invalid_pagination = (h.has_pagination_args(request.args) and not h.pagination_args_are_valid(request.args))
     if not h.is_valid_id_list(id_numbers) or invalid_pagination:
         abort(400)
 
@@ -85,7 +85,7 @@ def get_all_questions():
         Returns status 400 if pagination arguments (start, num) are supplied but are invalid.
         Returns status 500 on application error.
     """
-    if h.has_pagination_args(request) and not h.pagination_args_are_valid(request):
+    if h.has_pagination_args(request.args) and not h.pagination_args_are_valid(request.args):
         abort(400)
 
     questions = invoke_get_with_filters(repository, request.args)
@@ -93,11 +93,11 @@ def get_all_questions():
 
 
 @app.route('/questions/', methods=['POST'])
-def create_questions():
+def create_question():
     """
-    Allows creation of one or more new questions, given a JSON payload.
+    Allows creation of a new question, given a JSON payload.
     Returns the new questions (with IDs) on success.
-        Returns status 201 along with the JSON for the new questions on success.
+        Returns status 201 along with the JSON for the new question on success.
         Returns status 400 if the JSON payload is malformed.
         Returns status 500 on application error.
     """
@@ -105,7 +105,7 @@ def create_questions():
     if not question.try_set_from_json(request.json):
         abort(400)
     new_question = repository.create(question)
-    return Response(new_question.to_json(), mimetype='application/json')
+    return Response(new_question.to_json(), mimetype='application/json'), 201
 
 
 @app.route('/questions/<id_number>/', methods=['PUT'])
@@ -165,7 +165,7 @@ def invoke_get_with_filters(repo, args, id_numbers=None):
     # Pagination filters
     start = None
     num = None
-    if h.has_pagination_args(request):
+    if h.has_pagination_args(request.args):
         start = int(args.get('start'))
         num = int(args.get('num'))
 
