@@ -179,7 +179,7 @@ def invokeGetWithFilters(repository, request, ids = None):
                                           answerFilter = answerFilter,
                                           distractorFilter = distractorFilter,
                                           sortKey = sortKey,
-                                          sortDescending = (sortDirection == 'd'))
+                                          sortDescending = (sortDirection.lower() == 'd'))
     return questions
 
 

@@ -13,10 +13,16 @@ class Question():
         self.answer = ''
         self.distractors = []
 
-    def setFromCsv(self, csvRow):
-        self.question = csvRow[0] # TODO: need to be more defensive about this
-        self.answer = csvRow[1]
-        self.distractors = csvRow[2].split(', ')
+    def trySetFromCsv(self, csvRow):
+        if csvRow == None or len(csvRow) != 3:
+            return False
+        try:
+            self.question = csvRow[0]
+            self.answer = csvRow[1]
+            self.distractors = csvRow[2].split(', ')
+        except:
+            return False
+        return True
 
     def trySetFromJson(self, jsonDict):
         if jsonDict == None or not isinstance(jsonDict, dict):
@@ -30,10 +36,9 @@ class Question():
 
     def setIdentity(self, idValue):
         if (self.id == None):
-            self.id = idValue
+            self.id = int(idValue)
         else:
-            pass
-            # TODO: exception if we try to change an already-set ID?
+            raise Exception('Tried to change a Question ID value from ' + self.id + ' to ' + idValue)
 
     def toJson(self):
         return json.dumps(self.__dict__, indent=4, sort_keys=True)
@@ -98,24 +103,28 @@ class SimpleQuestionRepository():
     def loadStateFromFile(self, path):
         self._questionsInternal = dict()
         self._nextId = 1
-        with open(path) as csvFile: # TODO: probably should wrap with a try/catch
+        try:
+            with open(path) as csvFile:
 
-            csvSniffer = csv.Sniffer()
-            sample = csvFile.read(1024)
-            dialect = csvSniffer.sniff(sample, '|')
-            hasHeader = csvSniffer.has_header(sample)
-            csvFile.seek(0)
+                csvSniffer = csv.Sniffer()
+                sample = csvFile.read(1024)
+                dialect = csvSniffer.sniff(sample, '|')
+                hasHeader = csvSniffer.has_header(sample)
+                csvFile.seek(0)
 
-            csvRows = csv.reader(csvFile, dialect, delimiter ='|')
-            rowNumber = 0
-            for row in csvRows:
-                rowNumber += 1
-                if (hasHeader and rowNumber == 1):
-                    continue
-                question = Question()
-                question.setFromCsv(row)
-                self.create(question)
-
+                csvRows = csv.reader(csvFile, dialect, delimiter ='|')
+                rowNumber = 0
+                for row in csvRows:
+                    if len(row):
+                        pass
+                    rowNumber += 1
+                    if (hasHeader and rowNumber == 1):
+                        continue
+                    question = Question()
+                    if question.trySetFromCsv(row):
+                        self.create(question)
+        except OSError:
+            pass  # TODO: if we had a logger, now would be the time to use it
 
     def saveStateToFile(self, path):
         pass #TODO: implement this as a function of shutting down the app
