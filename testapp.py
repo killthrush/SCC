@@ -8,7 +8,6 @@ import testapphelper as h
 app = Flask(__name__)
 
 # TODO:
-# 5) code TODOs
 # 6) clean up, linting
 # 7) deployment, readme
 # 8) save state
@@ -20,11 +19,11 @@ repository = q.SimpleQuestionRepository()
 
 def initialize(app):
     app.debug = True # allow stack traces for development
-    repository.loadStateFromFile('./question_state.csv')
+    repository.load_state_from_file('./question_state.csv')
 
 
-@app.route('/questions/<ids>/', methods=['GET'])
-def getSomeQuestions(ids):
+@app.route('/questions/<id_numbers>/', methods=['GET'])
+def get_some_questions(id_numbers):
     """
     Returns questions matching the given IDs in JSON format (the default), or in csv format.
         Allowed parameters:
@@ -35,7 +34,7 @@ def getSomeQuestions(ids):
             * af: set to a string; if the answer text contains this string, it will be returned.  Conjunctive with 'qf' and 'df' filters.
             * df: set to a string; if the text of any of the distractors contains this string, it will be returned.  Conjunctive with 'af' and 'qf' filters.
             * sk: set to one of the following to set the sorting key for questions: 
-                * 'i': sort by id (the default)
+                * 'i': sort by id_number (the default)
                 * 'q': sort by question text
                 * 'a': sort by answer text
                 * 'd': sort by the number of distractors
@@ -46,15 +45,15 @@ def getSomeQuestions(ids):
         Returns status 400 if the ID list is malformed or if pagination arguments (start, num) are supplied but are invalid.
         Returns status 500 on application error.
     """    
-    if not h.isValidIdList(ids) or (h.hasPaginationArgs(request) and not h.paginationArgsAreValid(request)):
+    if not h.is_valid_id_list(id_numbers) or (h.has_pagination_args(request) and not h.pagination_args_are_valid(request)):
         abort(400)
     
-    questions = invokeGetWithFilters(repository, request, ids)
-    return h.formatQuestionResponse(questions, request)
+    questions = invoke_get_with_filters(repository, request, id_numbers)
+    return h.format_question_response(questions, request)
 
  
 @app.route('/questions/', methods=['GET'])
-def getAllQuestions():
+def get_all_questions():
     """
     Returns all available questions in JSON format (the default), or in csv format.
         Allowed parameters:
@@ -65,7 +64,7 @@ def getAllQuestions():
             * af: set to a string; if the answer text contains this string, it will be returned.  Conjunctive with 'qf' and 'df' filters.
             * df: set to a string; if the text of any of the distractors contains this string, it will be returned.  Conjunctive with 'af' and 'qf' filters.
             * sk: set to one of the following to set the sorting key for questions: 
-                * 'i': sort by id (the default)
+                * 'i': sort by id_number (the default)
                 * 'q': sort by question text
                 * 'a': sort by answer text
                 * 'd': sort by the number of distractors
@@ -76,15 +75,15 @@ def getAllQuestions():
         Returns status 400 if pagination arguments (start, num) are supplied but are invalid.
         Returns status 500 on application error.
     """
-    if (h.hasPaginationArgs(request) and not h.paginationArgsAreValid(request)):
+    if (h.has_pagination_args(request) and not h.pagination_args_are_valid(request)):
         abort(400)
 
-    questions = invokeGetWithFilters(repository, request)
-    return h.formatQuestionResponse(questions, request)
+    questions = invoke_get_with_filters(repository, request)
+    return h.format_question_response(questions, request)
 
 
 @app.route('/questions/', methods=['POST'])
-def createQuestions():
+def create_questions():
     """
     Allows creation of one or more new questions, given a JSON payload.  Returns the new questions (with IDs) on success.
         Returns status 201 along with the JSON for the new questions on success.
@@ -92,16 +91,16 @@ def createQuestions():
         Returns status 500 on application error.
     """
     question = q.Question()
-    if not h.isValidInt(id):
+    if not h.is_valid_int(id_number):
         abort(400)
-    if not question.trySetFromJson(request.json):
+    if not question.try_set_from_json(request.json):
         abort(400)
-    newQuestion = repository.create(question)
-    return Response(newQuestion.toJson(), mimetype='application/json')
+    new_question = repository.create(question)
+    return Response(new_question.to_json(), mimetype='application/json')
 
 
-@app.route('/questions/<id>/', methods=['PUT'])
-def editQuestion(id):
+@app.route('/questions/<id_number>/', methods=['PUT'])
+def edit_question(id_number):
     """
     Changes the data for a question given an ID and a JSON payload.  Returns the edited question on success.
         Returns status 200 along with the JSON for the updated question on success.
@@ -109,21 +108,21 @@ def editQuestion(id):
         Returns status 400 if the supplied ID was not a number, the JSON payload is malformed, or the ID in the payload does not match the URL.
         Returns status 500 on application error.
     """
-    if not h.isValidInt(id):
+    if not h.is_valid_int(id_number):
         abort(400)
-    question = repository.getById(id)
+    question = repository.get_by_id(id_number)
     if question == None:
         abort(404)
-    if 'id' in request.json and request.json['id'] != int(id):
+    if 'id_number' in request.json and request.json['id_number'] != int(id_number):
         abort(400)
-    if not question.trySetFromJson(request.json):
+    if not question.try_set_from_json(request.json):
         abort(400)
-    returnQuestion = repository.change(question)
-    return Response(returnQuestion.toJson(), mimetype='application/json')
+    return_question = repository.change(question)
+    return Response(return_question.to_json(), mimetype='application/json')
 
 
-@app.route('/questions/<id>/', methods=['DELETE'])
-def removeQuestion(id):
+@app.route('/questions/<id_number>/', methods=['DELETE'])
+def remove_question(id_number):
     """
     Removes the given question from the repository.
         Returns status 204 (no content) on success.
@@ -131,16 +130,16 @@ def removeQuestion(id):
         Returns status 400 if the supplied ID was not a number.
         Returns status 500 on application error.
     """
-    if not h.isValidInt(id):
+    if not h.is_valid_int(id_number):
         abort(400)    
-    question = repository.getById(id)
+    question = repository.get_by_id(id_number)
     if question == None:
         abort(404)
     repository.remove(question)
     return '', 204
 
 
-def invokeGetWithFilters(repository, request, ids = None):
+def invoke_get_with_filters(repository, request, id_numbers = None):
     """
     Given a question repository and a validated request context,
     loads questions given various parameters.
@@ -148,14 +147,14 @@ def invokeGetWithFilters(repository, request, ids = None):
     """
 
     # ID filters
-    idList = None
-    if isinstance(ids, str):
-        idList = ids.split(',')
+    id_list = None
+    if isinstance(id_numbers, str):
+        id_list = id_numbers.split(',')
     
     # Pagination filters
     start = None
     num = None
-    if h.hasPaginationArgs(request):
+    if h.has_pagination_args(request):
         start = int(request.args.get('start'))
         num = int(request.args.get('num'))
 
@@ -168,18 +167,18 @@ def invokeGetWithFilters(repository, request, ids = None):
     sortKey = request.args.get('sk')
     if not isinstance(sortKey, str):
         sortKey = 'i'
-    sortDirection = request.args.get('sd')
-    if not isinstance(sortDirection, str):
-        sortDirection = 'a'
+    sort_direction = request.args.get('sd')
+    if not isinstance(sort_direction, str):
+        sort_direction = 'a'
 
-    questions = repository.getWithFilters(idList = idList, 
-                                          startRecord = start, 
-                                          numRecords = num,
-                                          questionFilter = questionFilter,
-                                          answerFilter = answerFilter,
-                                          distractorFilter = distractorFilter,
-                                          sortKey = sortKey,
-                                          sortDescending = (sortDirection.lower() == 'd'))
+    questions = repository.get_with_filters(id_list = id_list, 
+                                            start_record = start, 
+                                            num_records = num,
+                                            question_filter = questionFilter,
+                                            answer_filter = answerFilter,
+                                            distractor_filter = distractorFilter,
+                                            sort_key = sortKey,
+                                            sort_descending = (sort_direction.lower() == 'd'))
     return questions
 
 

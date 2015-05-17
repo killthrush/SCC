@@ -1,51 +1,79 @@
+"""
+Module that contains core classes for working with Questions.
+"""
+
 import json
 import csv
 
 class Question():
-    
+
     """
-    Represents a Question, an object with text to represent the question itself, along with text to represent right and wrong answers.
+    Represents a Question, an object with text to represent the question itself,
+    along with text to represent right and wrong answers.
     """
 
     def __init__(self):
-        self.id = None
+        """
+        Initializes the Question instance
+        """
+        self.id_number = None
         self.question = ''
         self.answer = ''
         self.distractors = []
 
-    def trySetFromCsv(self, csvRow):
-        if csvRow == None or len(csvRow) != 3:
+    def try_set_from_csv(self, csv_row):
+        """
+        Attempt to safely set the Question's fields using a row of data parsed from csv.
+        """
+        if csv_row == None or len(csv_row) != 3:
             return False
         try:
-            self.question = csvRow[0]
-            self.answer = csvRow[1]
-            self.distractors = csvRow[2].split(', ')
-        except:
+            self.question = csv_row[0]
+            self.answer = csv_row[1]
+            self.distractors = csv_row[2].split(', ')
+        except Exception:
             return False
         return True
 
-    def trySetFromJson(self, jsonDict):
-        if jsonDict == None or not isinstance(jsonDict, dict):
+    def try_set_from_json(self, json_dict):
+        """
+        Attempt to safely set the Question's fields using json data parsed from a web request.
+        """
+        if json_dict == None or not isinstance(json_dict, dict):
             return False
-        if not 'question' in jsonDict or not 'answer' in jsonDict or not 'distractors' in jsonDict:
+        if not 'question' in json_dict or not 'answer' in json_dict or not 'distractors' in json_dict:
             return False
-        self.question = jsonDict['question']
-        self.answer = jsonDict['answer']
-        self.distractors = jsonDict['distractors']
+        self.question = json_dict['question']
+        self.answer = json_dict['answer']
+        self.distractors = json_dict['distractors']
         return True
 
-    def setIdentity(self, idValue):
-        if (self.id == None):
-            self.id = int(idValue)
+    def set_identity(self, id_value):
+        """
+        Sets the question's ID. Raises an exception if this is attempted more than once.
+        """
+        if self.id_number == None:
+            self.id_number = int(id_value)
         else:
-            raise Exception('Tried to change a Question ID value from ' + self.id + ' to ' + idValue)
+            message = 'Tried to change a Question ID value from ' + self.id_number + ' to ' + id_value
+            raise RuntimeError(message)
 
-    def toJson(self):
+    def to_json(self):
+        """
+        Converts the Question's fields to pretty-printed JSON.
+        """
         return json.dumps(self.__dict__, indent=4, sort_keys=True)
 
-    def toCsv(self):
-        distractorsString = ', '.join(self.distractors)
-        return str(self.id) + '|' + self.question + '|' + self.answer + '|' + distractorsString + '\n'
+    def to_csv(self):
+        """
+        Converts the Question's fields to pipe-separated format.
+        """
+        distractors_string = ', '.join(self.distractors)
+        csv_string = "{0}|{1}|{2}|{3}\n".format(str(self.id_number),
+                                                self.question,
+                                                self.answer,
+                                                distractors_string)
+        return csv_string
 
 
 class QuestionCollection():
@@ -55,29 +83,43 @@ class QuestionCollection():
     """
 
     def __init__(self):
-        self._questionsInternal = []
+        """
+        Initializes the QuestionCollection instance
+        """
+        self._internal_questions = []
 
     def __iter__(self):
-        return self._questionsInternal.__iter__()
+        """
+        Returns a standard iterator for the QuestionCollection instance
+        """
+        return self._internal_questions.__iter__()
 
-    def __next__(self):
-        return self._questionsInternal.__next__()
 
-    def toJson(self):
-        jsonSnippets = []
-        for question in self._questionsInternal:
-            jsonSnippets.append(question.__dict__)
-        jsonString = json.dumps(jsonSnippets, indent=4, sort_keys=True)
-        return jsonString
 
-    def toCsv(self):
-        csvData = 'id|question|answer|distractors\n'
-        for question in self._questionsInternal:
-            csvData += question.toCsv()
-        return csvData
+    def to_json(self):
+        """
+        Converts the QuestionCollection's fields to pretty-printed JSON.
+        """
+        json_snippets = []
+        for question in self._internal_questions:
+            json_snippets.append(question.__dict__)
+        json_string = json.dumps(json_snippets, indent=4, sort_keys=True)
+        return json_string
 
-    def addQuestion(self, question):
-        self._questionsInternal.append(question)
+    def to_csv(self):
+        """
+        Converts the QuestionCollection's fields to pipe-separated format.
+        """
+        csv_data = 'id|question|answer|distractors\n'
+        for question in self._internal_questions:
+            csv_data += question.to_csv()
+        return csv_data
+
+    def add_question(self, question):
+        """
+        Adds a Question to the QuestionCollection's instance.
+        """
+        self._internal_questions.append(question)
 
 
 
@@ -88,114 +130,139 @@ class SimpleQuestionRepository():
     csv files on disk for persistence.
     """
 
-    _sortFunctions = {
-                        'i':lambda question: question.id,
-                        'q':lambda question: question.question,
-                        'a':lambda question: question.answer,
-                        'd':lambda question: len(question.distractors)
-                     } 
+    _sortFunctions = {'i':lambda question: question.id_number,
+                      'q':lambda question: question.question,
+                      'a':lambda question: question.answer,
+                      'd':lambda question: len(question.distractors)}
 
     def __init__(self):
-        self._questionsInternal = dict()
-        self._nextId = 1
+        """
+        Initializes the SimpleQuestionRepository instance
+        """
+        self._internal_questions = dict()
+        self._next_id = 1
 
 
-    def loadStateFromFile(self, path):
-        self._questionsInternal = dict()
-        self._nextId = 1
+    def load_state_from_file(self, path):
+        """
+        Initializes the SimpleQuestionRepository instance by loading data from a csv file.
+        """
+        self._internal_questions = dict()
+        self._next_id = 1
         try:
-            with open(path) as csvFile:
+            with open(path) as csv_file:
 
-                csvSniffer = csv.Sniffer()
-                sample = csvFile.read(1024)
-                dialect = csvSniffer.sniff(sample, '|')
-                hasHeader = csvSniffer.has_header(sample)
-                csvFile.seek(0)
+                sniffer = csv.Sniffer()
+                sample = csv_file.read(1024)
+                dialect = sniffer.sniff(sample, '|')
+                has_header = sniffer.has_header(sample)
+                csv_file.seek(0)
 
-                csvRows = csv.reader(csvFile, dialect, delimiter ='|')
-                rowNumber = 0
-                for row in csvRows:
+                csv_rows = csv.reader(csv_file, dialect, delimiter='|')
+                row_number = 0
+                for row in csv_rows:
                     if len(row):
                         pass
-                    rowNumber += 1
-                    if (hasHeader and rowNumber == 1):
+                    row_number += 1
+                    if has_header and row_number == 1:
                         continue
                     question = Question()
-                    if question.trySetFromCsv(row):
+                    if question.try_set_from_csv(row):
                         self.create(question)
         except OSError:
             pass  # TODO: if we had a logger, now would be the time to use it
 
-    def saveStateToFile(self, path):
+    def save_state_to_file(self, path):
+        """
+        Dumps the internal state of the repository to a csv file.
+        """
         pass #TODO: implement this as a function of shutting down the app
 
 
-    def getById(self, id):
-        idValue = int(id)
-        if not idValue in self._questionsInternal:
+    def get_by_id(self, id_number):
+        """
+        Loads a single Question from the repository by its ID.
+        Returns None if the question is not found.
+        """
+        id_value = int(id_number)
+        if not id_value in self._internal_questions:
             return None
-        question = self._questionsInternal[idValue]    
+        question = self._internal_questions[id_value]
         return question
 
 
-    def getWithFilters(self, 
-                       idList = None, 
-                       startRecord = None, 
-                       numRecords = None,
-                       questionFilter = None,
-                       answerFilter = None,
-                       distractorFilter = None,
-                       sortKey = 'i',
-                       sortDescending = False):
-        workingQuestionList = []
+    def get_with_filters(self,
+                         id_list=None,
+                         start_record=None,
+                         num_records=None,
+                         question_filter=None,
+                         answer_filter=None,
+                         distractor_filter=None,
+                         sort_key='i',
+                         sort_descending=False):
+        """
+        Loads a QuestionCollection from the repository based on a set of optional filters.
+        Also can apply a simple set of sort conditions.
+        Returns an empty QuestionCollection if no questions matched the filters.
+        """
+        working_question_list = []
 
         # Load main list of questions; this will be filtered further if needed
-        if idList != None:
-            workingQuestionList = [self.getById(id) for id in idList if self.getById(id) != None]
+        if id_list != None:
+            working_question_list = [self.get_by_id(id_number) for id_number in id_list if self.get_by_id(id_number) != None]
         else:
-            workingQuestionList = list(self._questionsInternal.values()) # this wrapping is necessary for python 3
+            working_question_list = list(self._internal_questions.values()) # this wrapping is necessary for python 3
 
         # Apply sorting
-        if not sortKey.lower() in self._sortFunctions:
-            sortKey = 'i'
-        workingQuestionList = sorted(workingQuestionList, key=self._sortFunctions[sortKey.lower()], reverse=sortDescending)        
+        if not sort_key.lower() in self._sortFunctions:
+            sort_key = 'i'
+        working_question_list = sorted(working_question_list, key=self._sortFunctions[sort_key.lower()], reverse=sort_descending)
 
         # Apply value filters, if needed
-        if isinstance(questionFilter, str):
-            workingQuestionList = [q for q in workingQuestionList if q.question.find(questionFilter) != -1]
-        if isinstance(answerFilter, str):
-            workingQuestionList = [q for q in workingQuestionList if q.answer.find(answerFilter) != -1]
-        if isinstance(distractorFilter, str):
-            workingQuestionList = [q for q in workingQuestionList if len([d for d in q.distractors if d.find(distractorFilter) != -1]) > 0]
+        if isinstance(question_filter, str):
+            working_question_list = [q for q in working_question_list if q.question.find(question_filter) != -1]
+        if isinstance(answer_filter, str):
+            working_question_list = [q for q in working_question_list if q.answer.find(answer_filter) != -1]
+        if isinstance(distractor_filter, str):
+            working_question_list = [q for q in working_question_list if len([d for d in q.distractors if d.find(distractor_filter) != -1]) > 0]
 
         # Apply pagination filter to remaining results
-        if isinstance(startRecord, int) and isinstance(numRecords, int):
-            workingQuestionList = workingQuestionList[startRecord-1:startRecord+numRecords-1]
+        if isinstance(start_record, int) and isinstance(num_records, int):
+            working_question_list = working_question_list[start_record-1:start_record+num_records-1]
 
-        returnCollection = QuestionCollection()
-        for question in workingQuestionList:
-            returnCollection.addQuestion(question)  
-        return returnCollection
+        return_collection = QuestionCollection()
+        for question in working_question_list:
+            return_collection.add_question(question)
+        return return_collection
 
 
     def create(self, question):
-        question.setIdentity(self._nextId)
-        self._questionsInternal.setdefault(question.id, question)
-        self._nextId += 1
+        """
+        Creates a Question in the repository and defines its ID.
+        """
+        question.set_identity(self._next_id)
+        self._internal_questions.setdefault(question.id_number, question)
+        self._next_id += 1
         return question
 
 
     def change(self, question):
-        if not question.id in self._questionsInternal:
+        """
+        Replaces a Question in the repository with the one supplied.
+        """
+        if not question.id_number in self._internal_questions:
             return
-        self._questionsInternal[question.id] = question
+        self._internal_questions[question.id_number] = question
         return question
 
 
     def remove(self, question):
-        if not question.id in self._questionsInternal:
+        """
+        Removes the given Question from the repository.
+        """
+        if not question.id_number in self._internal_questions:
             return
-        self._questionsInternal.pop(question.id)
+        self._internal_questions.pop(question.id_number)
 
 
 if __name__ == '__main__':
