@@ -125,19 +125,29 @@ class SimpleQuestionRepository():
     def getWithFilters(self, 
                        idList = None, 
                        startRecord = None, 
-                       numRecords = None): # TODO: should return copies of the questions; we want to avoid side effects
+                       numRecords = None,
+                       questionFilter = None,
+                       answerFilter = None,
+                       distractorFilter = None): # TODO: should return copies of the questions; we want to avoid side effects
         workingQuestionList = []
 
         # Load main list of questions; this will be filtered further if needed
-        if idList != None: # TODO: replace loops with list comprehensions
-            for id in idList:
-                question = self.getById(id)
-                if question == None:
-                    continue
-                workingQuestionList.append(question)
+        if idList != None:
+            workingQuestionList = [self.getById(id) for id in idList if self.getById(id) != None]
         else:
             workingQuestionList = list(self._questionsInternal.values()) # this wrapping is necessary for python 3
 
+        # TODO: apply sorting here
+
+        # Apply value filters, if needed
+        if isinstance(questionFilter, str):
+            workingQuestionList = [q for q in workingQuestionList if q.question.find(questionFilter) != -1]
+        if isinstance(answerFilter, str):
+            workingQuestionList = [q for q in workingQuestionList if q.answer.find(answerFilter) != -1]
+        if isinstance(distractorFilter, str):
+            workingQuestionList = [q for q in workingQuestionList if len([d for d in q.distractors if d.find(distractorFilter) != -1]) > 0]
+
+        # Apply pagination filter to remaining results
         if isinstance(startRecord, int) and isinstance(numRecords, int):
             workingQuestionList = workingQuestionList[startRecord-1:startRecord+numRecords-1]
 

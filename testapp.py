@@ -9,6 +9,7 @@ app = Flask(__name__)
 
 # TODO:
 # 2) Filtering
+# 3) sorting
 # 5) code TODOs
 # 6) clean up, linting
 # 7) deployment, readme
@@ -24,7 +25,7 @@ def initialize(app):
     repository.loadStateFromFile('./question_state.csv')
 
 
-@app.route('/questions/<ids>/', methods=['GET'])
+@app.route('/questions/<ids>/', methods=['GET']) # TODO: resolve duplicate code with getAllQuestions()
 def getSomeQuestions(ids):
     """
     Returns questions matching the given IDs in JSON format (the default), or in csv format.
@@ -39,18 +40,11 @@ def getSomeQuestions(ids):
     if not h.isValidIdList(ids) or (h.hasPaginationArgs(request) and not h.paginationArgsAreValid(request)):
         abort(400)
     
-    idList = ids.split(',')
-    start = None
-    num = None
-    if h.hasPaginationArgs(request):
-        start = int(request.args.get('start'))
-        num = int(request.args.get('num'))
-
-    questions = repository.getWithFilters(idList = idList, startRecord=start, numRecords=num)
+    questions = invokeGetWithFilters(repository, request, ids)
     return h.formatQuestionResponse(questions, request)
 
  
-@app.route('/questions/', methods=['GET'])
+@app.route('/questions/', methods=['GET']) # TODO: resolve duplicate code with getSomeQuestions()
 def getAllQuestions():
     """
     Returns all available questions in JSON format (the default), or in csv format.
@@ -65,13 +59,7 @@ def getAllQuestions():
     if (h.hasPaginationArgs(request) and not h.paginationArgsAreValid(request)):
         abort(400)
 
-    start = None
-    num = None
-    if h.hasPaginationArgs(request):
-        start = int(request.args.get('start'))
-        num = int(request.args.get('num'))
-
-    questions = repository.getWithFilters(startRecord=start, numRecords=num)
+    questions = invokeGetWithFilters(repository, request)
     return h.formatQuestionResponse(questions, request)
 
 
@@ -131,6 +119,41 @@ def removeQuestion(id):
     repository.remove(question)
     return '', 204
 
+
+def invokeGetWithFilters(repository, request, ids = None):
+    """
+    Given a question repository and a validated request context,
+    loads questions given various parameters.
+    The parameters can be arbitrarily mixed and matched by the caller.
+    """
+
+    # ID filters
+    idList = None
+    if isinstance(ids, str):
+        idList = ids.split(',')
+    
+    # Pagination filters
+    start = None
+    num = None
+    if h.hasPaginationArgs(request):
+        start = int(request.args.get('start'))
+        num = int(request.args.get('num'))
+
+    # Question value filters
+    questionFilter = request.args.get('qf')
+    answerFilter = request.args.get('af')
+    distractorFilter = request.args.get('df')
+
+    # Sorting key
+    # TODO: implement this
+
+    questions = repository.getWithFilters(idList = idList, 
+                                          startRecord=start, 
+                                          numRecords=num,
+                                          questionFilter=questionFilter,
+                                          answerFilter=answerFilter,
+                                          distractorFilter=distractorFilter)
+    return questions
 
 
 if __name__ == '__main__':
