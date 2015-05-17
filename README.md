@@ -73,9 +73,9 @@ This sample API is implemented as a Flask application written in Python 3.  I ch
         Returns status 500 on application error.
 
 ## POST /questions/
-    Allows creation of anew question, given a JSON payload.
+    Allows creation of a new question, given a JSON payload.
     Returns the new questions (with IDs) on success.
-        Returns status 201 along with the JSON for the new questions on success.
+        Returns status 201 along with the JSON for the new question on success.
         Returns status 400 if the JSON payload is malformed.
         Returns status 500 on application error.
         
