@@ -19,6 +19,10 @@ def initialize(app):
 def get_some_questions(ids):
     idSet = ids.split(',') # TODO: this needs some hardening
     questions = repository.getByIds(idSet)
+    format = request.args.get('fmt')
+    if format == 'csv':
+        csvString = questions.toCsv()
+        return Response(csvString, mimetype='text/csv')
     jsonString = questions.toJson()
     return Response(jsonString, mimetype='application/json')
 
@@ -26,6 +30,10 @@ def get_some_questions(ids):
 @app.route('/questions/', methods=['GET']) # get all questions; can use format specifier here (json or csv).  Can also use page arguments, filters, sorting
 def get_all_questions():
     questions = repository.getAll() # Methinks this is dangerous in general - DDoS waiting to happen
+    format = request.args.get('fmt')
+    if format == 'csv':
+        csvString = questions.toCsv()
+        return Response(csvString, mimetype='text/csv')
     jsonString = questions.toJson()
     return Response(jsonString, mimetype='application/json')
 

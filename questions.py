@@ -34,7 +34,8 @@ class Question():
         return json.dumps(self.__dict__, indent=4, sort_keys=True) # TODO: not used; remove
 
     def toCsv(self):
-        return ''
+        distractorsString = ', '.join(self.distractors)
+        return self.id + '|' + self.question + '|' + self.answer + '|' + distractorsString + '\n'
 
 
 class QuestionCollection():
@@ -52,21 +53,18 @@ class QuestionCollection():
     def __next__(self):
         return self._questionsInternal.__next__()
 
-    def toJson(self): # TODO : clean this up
-        jsonString = '['
+    def toJson(self):
         jsonSnippets = []
-        jsonSnippets2 = []
         for question in self._questionsInternal:
-            jsonSnippets.append(question.toJson())
-            jsonSnippets2.append(question.__dict__)
-        jsonString += ','.join(jsonSnippets)
-        jsonString += ']'  
-
-        jsonString = json.dumps(jsonSnippets2, indent=4, sort_keys=True)
+            jsonSnippets.append(question.__dict__)
+        jsonString = json.dumps(jsonSnippets, indent=4, sort_keys=True)
         return jsonString
 
     def toCsv(self):
-        return ''
+        csvData = 'id|question|answer|distractors\n'
+        for question in self._questionsInternal:
+            csvData += question.toCsv()
+        return csvData
 
     def addQuestion(self, question):
         self._questionsInternal.append(question)
@@ -154,7 +152,7 @@ class SimpleQuestionRepository():
         if not question.id in self._questionsInternal:
             return
         self._questionsInternal.pop(question.id)
-        
+
 
 if __name__ == '__main__':
     pass  # TODO: add some tests
