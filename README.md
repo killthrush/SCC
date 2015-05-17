@@ -4,13 +4,20 @@ Come see a n00b try to write some Python code!
 This sample API is implemented as a Flask application written in Python 3.  I chose Flask because I've been wanting to try it for a while - it's simple, elegant, and perfect for a small coding exercise.  I chose Python 3 because I didn't know better.  At least I won't be breaking anything!
 
 # Setup
-OK, to set this up:
 * Clone this repo
 * Install Python 3 if you don't already have it
 * Install Flask as described here: http://flask.pocoo.org/docs/0.10/installation/#installation
 * Windows installations for Flask are a bit more complicated; you might need to install easy_install and pip first (see documentation)
 * Run testapp.py from your python shell.  This will run the API endpoint on http://localhost:5000.  The application will parse and read question_state.csv into memory, so you will be able to test the endpoint immediately.
 * Test the endpoint using curl or your favorite Chrome REST plugin (I use the Advanced Rest Client)
+
+# Rough Edges
+* Normally I write a lot of unit tests, but as this is my first Python app, I haven't learned how it all works yet so there's no tests
+* There's no driver UI.  Given some more time I would have built something with angular and included it in the project.
+* The state of the questions does not persist to disk.  I wrote a stub but didn't finish.
+* I'm not sure that this Flask app is thread-safe with its in-memory repo. I need to read more on how this stuff works
+* There's not much in the way of indexing for the question data beyond a dictionary to handle quick lookups by ID
+* I tried to stick to accepted python style as much as possible, but there still might be a C# accent.  Went nuts with pylint, maybe I went overboard?
 
 # API Documentation
 
