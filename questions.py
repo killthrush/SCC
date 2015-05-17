@@ -18,8 +18,10 @@ class Question():
         self.answer = csvRow[1]
         self.distractors = csvRow[2].split(', ')
 
-    def setFromJson(self, jsonString):
-        json.loads(jsonString, self)
+    def setFromJson(self, jsonDict): #TODO: these fields are required, should handle badly formatted data more cleanly
+        self.question = jsonDict['question']
+        self.answer = jsonDict['answer']
+        self.distractors = jsonDict['distractors']
 
     def setIdentity(self, idValue):
         if (self.id == None):
@@ -43,6 +45,12 @@ class QuestionCollection():
 
     def __init__(self):
         self._questionsInternal = []
+
+    def __iter__(self):
+        return self._questionsInternal.__iter__()
+
+    def __next__(self):
+        return self._questionsInternal.__next__()
 
     def toJson(self): # TODO : clean this up
         jsonString = '['
@@ -76,9 +84,10 @@ class SimpleQuestionRepository():
         self._questionsInternal = dict()
         self._nextId = 1
 
-    def loadFromFile(self, path):
-        _questionsInternal = dict()
 
+    def loadStateFromFile(self, path):
+        self._questionsInternal = dict()
+        self._nextId = 1
         with open(path) as csvFile: # TODO: probably should wrap with a try/catch
 
             csvSniffer = csv.Sniffer()
@@ -88,18 +97,18 @@ class SimpleQuestionRepository():
             csvFile.seek(0)
 
             csvRows = csv.reader(csvFile, dialect, delimiter ='|')
-
-            rowIndex = 0
+            rowNumber = 0
             for row in csvRows:
-                rowIndex += 1
-                if (hasHeader and rowIndex == 1):
+                rowNumber += 1
+                if (hasHeader and rowNumber == 1):
                     continue
                 question = Question()
                 question.setFromCsv(row)
-                question.setIdentity(rowIndex)
-                self._questionsInternal.setdefault(question.id, question)
+                self.create(question)
 
-            self._nextId += len(_questionsInternal) + 1
+
+    def saveStateToFile(self, path):
+        pass #TODO: implement this as a function of shutting down the app
 
 
     def getAll(self):
@@ -109,18 +118,43 @@ class SimpleQuestionRepository():
         return returnCollection
 
 
+    def getById(self, id):
+        idValue = int(id)
+        if not idValue in self._questionsInternal:
+            return None
+        question = self._questionsInternal[idValue]    
+        return question
+
+
     def getByIds(self, idSet):
-        returnCollection = QuestionCollection()        
-
+        returnCollection = QuestionCollection()
         for id in idSet:
-            idValue = int(id)
-            if not idValue in self._questionsInternal:
+            question = self.getById(id)
+            if question == None:
                 continue
-            question = self._questionsInternal[idValue]
             returnCollection.addQuestion(question)
-
         return returnCollection
 
+
+    def create(self, question):
+        question.setIdentity(self._nextId)
+        self._questionsInternal.setdefault(question.id, question)
+        self._nextId += 1
+        return question
+
+
+    def change(self, question):
+        if not question.id in self._questionsInternal:
+            return
+        self._questionsInternal[question.id] = question
+        return question
+
+
+    def remove(self, question):
+        if not question.id in self._questionsInternal:
+            return
+        self._questionsInternal.pop(question.id)
+        
 
 if __name__ == '__main__':
     pass  # TODO: add some tests
