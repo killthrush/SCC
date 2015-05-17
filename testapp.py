@@ -8,7 +8,6 @@ import testapphelper as h
 app = Flask(__name__)
 
 # TODO:
-# 1) Pagination
 # 2) Filtering
 # 5) code TODOs
 # 6) clean up, linting
@@ -17,8 +16,7 @@ app = Flask(__name__)
 # 9) attempt some tests
 # 10) test driver (angular?)
 
-# Keep questions in memory
-# This doesn't look thread-safe...
+# Keep questions in memory. This doesn't look thread-safe...
 repository = q.SimpleQuestionRepository()
 
 def initialize(app):
@@ -32,14 +30,23 @@ def getSomeQuestions(ids):
     Returns questions matching the given IDs in JSON format (the default), or in csv format.
         Allowed parameters:
             * fmt: set to 'csv' to return the questions in pipe-delimited format
+            * start: set to the ordinal number of the first question to return.  Must appear with num.
+            * num: set to the total number of questions to return.  Must appear with start.            
         Returns status 200 along with the formatted question data on success.
-        Returns status 400 if the ID list is malformed.
+        Returns status 400 if the ID list is malformed or if pagination arguments (start, num) are supplied but are invalid.
         Returns status 500 on application error.
     """    
-    if not h.isValidIdList(ids):
+    if not h.isValidIdList(ids) or (h.hasPaginationArgs(request) and not h.paginationArgsAreValid(request)):
         abort(400)
+    
     idList = ids.split(',')
-    questions = repository.getByIds(idList)
+    start = None
+    num = None
+    if h.hasPaginationArgs(request):
+        start = int(request.args.get('start'))
+        num = int(request.args.get('num'))
+
+    questions = repository.getWithFilters(idList = idList, startRecord=start, numRecords=num)
     return h.formatQuestionResponse(questions, request)
 
  
@@ -49,10 +56,22 @@ def getAllQuestions():
     Returns all available questions in JSON format (the default), or in csv format.
         Allowed parameters:
             * fmt: set to 'csv' to return the questions in pipe-delimited format
+            * start: set to the ordinal number of the first question to return.  Must appear with num.
+            * num: set to the total number of questions to return.  Must appear with start.
         Returns status 200 along with the formatted question data on success.
+        Returns status 400 if pagination arguments (start, num) are supplied but are invalid.
         Returns status 500 on application error.
     """
-    questions = repository.getAll() # Methinks this is dangerous in general
+    if (h.hasPaginationArgs(request) and not h.paginationArgsAreValid(request)):
+        abort(400)
+
+    start = None
+    num = None
+    if h.hasPaginationArgs(request):
+        start = int(request.args.get('start'))
+        num = int(request.args.get('num'))
+
+    questions = repository.getWithFilters(startRecord=start, numRecords=num)
     return h.formatQuestionResponse(questions, request)
 
 
@@ -65,6 +84,8 @@ def createQuestions():
         Returns status 500 on application error.
     """
     question = q.Question()
+    if not h.isValidInt(id):
+        abort(400)
     if not question.trySetFromJson(request.json):
         abort(400)
     newQuestion = repository.create(question)
@@ -80,7 +101,7 @@ def editQuestion(id):
         Returns status 400 if the supplied ID was not a number, the JSON payload is malformed, or the ID in the payload does not match the URL.
         Returns status 500 on application error.
     """
-    if not h.isValidId(id):
+    if not h.isValidInt(id):
         abort(400)
     question = repository.getById(id)
     if question == None:
@@ -102,7 +123,7 @@ def removeQuestion(id):
         Returns status 400 if the supplied ID was not a number.
         Returns status 500 on application error.
     """
-    if not h.isValidId(id):
+    if not h.isValidInt(id):
         abort(400)    
     question = repository.getById(id)
     if question == None:

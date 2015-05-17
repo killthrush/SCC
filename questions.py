@@ -114,13 +114,6 @@ class SimpleQuestionRepository():
         pass #TODO: implement this as a function of shutting down the app
 
 
-    def getAll(self): # TODO: should return copies of the questions; we want to avoid side effects
-        returnCollection = QuestionCollection() 
-        for question in self._questionsInternal.values():
-            returnCollection.addQuestion(question)
-        return returnCollection
-
-
     def getById(self, id): # TODO: should return copies of the questions; we want to avoid side effects
         idValue = int(id)
         if not idValue in self._questionsInternal:
@@ -129,13 +122,28 @@ class SimpleQuestionRepository():
         return question
 
 
-    def getByIds(self, idSet): # TODO: should return copies of the questions; we want to avoid side effects
+    def getWithFilters(self, 
+                       idList = None, 
+                       startRecord = None, 
+                       numRecords = None): # TODO: should return copies of the questions; we want to avoid side effects
+        workingQuestionList = []
+
+        # Load main list of questions; this will be filtered further if needed
+        if idList != None: # TODO: replace loops with list comprehensions
+            for id in idList:
+                question = self.getById(id)
+                if question == None:
+                    continue
+                workingQuestionList.append(question)
+        else:
+            workingQuestionList = list(self._questionsInternal.values()) # this wrapping is necessary for python 3
+
+        if isinstance(startRecord, int) and isinstance(numRecords, int):
+            workingQuestionList = workingQuestionList[startRecord-1:startRecord+numRecords-1]
+
         returnCollection = QuestionCollection()
-        for id in idSet:
-            question = self.getById(id)
-            if question == None:
-                continue
-            returnCollection.addQuestion(question)
+        for question in workingQuestionList:
+            returnCollection.addQuestion(question)  
         return returnCollection
 
 
