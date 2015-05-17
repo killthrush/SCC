@@ -93,6 +93,7 @@ These endpoints are provided by Flask free of charge and accept the same argumen
 
 # JSON Format
 The format of a proper JSON document looks like this:
+    
     {
         "answer": "3333",
         "distractors": [
