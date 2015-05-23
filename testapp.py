@@ -26,29 +26,6 @@ def initialize():
 def get_some_questions(id_numbers):
     """
     Returns questions matching the given IDs in JSON format (the default), or in csv format.
-        Allowed parameters:
-            * fmt: set to 'csv' to return the questions in pipe-delimited format
-            * start: set to the ordinal number of the first question to return.
-                Must appear with num.
-            * num: set to the total number of questions to return.  Must appear with start.
-            * qf: set to a string; if the question text contains this string, it will be returned.
-                Conjunctive with 'af' and 'df' filters.
-            * af: set to a string; if the answer text contains this string, it will be returned.
-                Conjunctive with 'qf' and 'df' filters.
-            * df: set to a string; if the text of any of the distractors contains this string,
-                it will be returned.  Conjunctive with 'af' and 'qf' filters.
-            * sk: set to one of the following to set the sorting key for questions:
-                * 'i': sort by id_number (the default)
-                * 'q': sort by question text
-                * 'a': sort by answer text
-                * 'd': sort by the number of distractors
-            * sd: set to one of the following to set the sorting direction for questions:
-                * 'a': sort ascending (the default)
-                * 'd': sort descending
-        Returns status 200 along with the formatted question data on success.
-        Returns status 400 if the ID list is malformed or if pagination arguments (start, num)
-            are supplied but are invalid.
-        Returns status 500 on application error.
     """
     invalid_pagination = (h.has_pagination_args(request.args) and not h.pagination_args_are_valid(request.args))
     if not h.is_valid_id_list(id_numbers) or invalid_pagination:
@@ -62,28 +39,6 @@ def get_some_questions(id_numbers):
 def get_all_questions():
     """
     Returns all available questions in JSON format (the default), or in csv format.
-        Allowed parameters:
-            * fmt: set to 'csv' to return the questions in pipe-delimited format
-            * start: set to the ordinal number of the first question to return.
-                Must appear with num.
-            * num: set to the total number of questions to return.  Must appear with start.
-            * qf: set to a string; if the question text contains this string, it will be returned.
-                Conjunctive with 'af' and 'df' filters.
-            * af: set to a string; if the answer text contains this string, it will be returned.
-                Conjunctive with 'qf' and 'df' filters.
-            * df: set to a string; if the text of any of the distractors contains this string,
-                it will be returned.  Conjunctive with 'af' and 'qf' filters.
-            * sk: set to one of the following to set the sorting key for questions:
-                * 'i': sort by id_number (the default)
-                * 'q': sort by question text
-                * 'a': sort by answer text
-                * 'd': sort by the number of distractors
-            * sd: set to one of the following to set the sorting direction for questions:
-                * 'a': sort ascending (the default)
-                * 'd': sort descending
-        Returns status 200 along with the formatted question data on success.
-        Returns status 400 if pagination arguments (start, num) are supplied but are invalid.
-        Returns status 500 on application error.
     """
     if h.has_pagination_args(request.args) and not h.pagination_args_are_valid(request.args):
         abort(400)
@@ -97,9 +52,6 @@ def create_question():
     """
     Allows creation of a new question, given a JSON payload.
     Returns the new questions (with IDs) on success.
-        Returns status 201 along with the JSON for the new question on success.
-        Returns status 400 if the JSON payload is malformed.
-        Returns status 500 on application error.
     """
     question = q.Question()
     if not question.try_set_from_json(request.json):
@@ -113,11 +65,6 @@ def edit_question(id_number):
     """
     Changes the data for a question given an ID and a JSON payload.  Returns the edited
     question on success.
-        Returns status 200 along with the JSON for the updated question on success.
-        Returns status 404 if the requested question does not exist.
-        Returns status 400 if the supplied ID was not a number, the JSON payload is malformed,
-            or the ID in the payload does not match the URL.
-        Returns status 500 on application error.
     """
     if not h.is_valid_int(id_number):
         abort(400)
@@ -136,10 +83,6 @@ def edit_question(id_number):
 def remove_question(id_number):
     """
     Removes the given question from the repository.
-        Returns status 204 (no content) on success.
-        Returns status 404 if the requested question does not exist.
-        Returns status 400 if the supplied ID was not a number.
-        Returns status 500 on application error.
     """
     if not h.is_valid_int(id_number):
         abort(400)
