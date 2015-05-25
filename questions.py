@@ -94,8 +94,6 @@ class QuestionCollection():
         """
         return self._internal_questions.__iter__()
 
-
-
     def to_json(self):
         """
         Converts the QuestionCollection's fields to pretty-printed JSON.

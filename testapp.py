@@ -31,7 +31,7 @@ def get_some_questions(id_numbers):
     if not h.is_valid_id_list(id_numbers) or invalid_pagination:
         abort(400)
 
-    questions = invoke_get_with_filters(repository, request.args, id_numbers)
+    questions = h.invoke_get_with_filters(repository, request.args, id_numbers)
     return h.format_question_response(questions, request.args)
 
 
@@ -43,7 +43,7 @@ def get_all_questions():
     if h.has_pagination_args(request.args) and not h.pagination_args_are_valid(request.args):
         abort(400)
 
-    questions = invoke_get_with_filters(repository, request.args)
+    questions = h.invoke_get_with_filters(repository, request.args)
     return h.format_question_response(questions, request.args)
 
 
@@ -92,48 +92,6 @@ def remove_question(id_number):
     repository.remove(question)
     return '', 204
 
-
-def invoke_get_with_filters(repo, args, id_numbers=None):
-    """
-    Given a question repository and a validated request context,
-    loads questions given various parameters.
-    The parameters can be arbitrarily mixed and matched by the caller.
-    """
-
-    # ID filters
-    id_list = None
-    if isinstance(id_numbers, str):
-        id_list = id_numbers.split(',')
-
-    # Pagination filters
-    start = None
-    num = None
-    if h.has_pagination_args(request.args):
-        start = int(args.get('start'))
-        num = int(args.get('num'))
-
-    # Question value filters
-    question_filter = args.get('qf')
-    answer_filter = args.get('af')
-    distractor_filter = args.get('df')
-
-    # Sorting
-    sort_key = args.get('sk')
-    if not isinstance(sort_key, str):
-        sort_key = 'i'
-    sort_direction = args.get('sd')
-    if not isinstance(sort_direction, str):
-        sort_direction = 'a'
-
-    questions = repo.get_with_filters(id_list=id_list,
-                                      start_record=start,
-                                      num_records=num,
-                                      question_filter=question_filter,
-                                      answer_filter=answer_filter,
-                                      distractor_filter=distractor_filter,
-                                      sort_key=sort_key,
-                                      sort_descending=(sort_direction.lower() == 'd'))
-    return questions
 
 
 if __name__ == '__main__':

@@ -71,3 +71,46 @@ def is_valid_int(string_to_check):
         return True
     except ValueError:
         return False
+
+
+def invoke_get_with_filters(repo, args, id_numbers=None):
+    """
+    Given a question repository and a validated request context,
+    loads questions given various parameters.
+    The parameters can be arbitrarily mixed and matched by the caller.
+    """
+
+    # ID filters
+    id_list = None
+    if isinstance(id_numbers, str):
+        id_list = id_numbers.split(',')
+
+    # Pagination filters
+    start = None
+    num = None
+    if has_pagination_args(args):
+        start = int(args.get('start'))
+        num = int(args.get('num'))
+
+    # Question value filters
+    question_filter = args.get('qf')
+    answer_filter = args.get('af')
+    distractor_filter = args.get('df')
+
+    # Sorting
+    sort_key = args.get('sk')
+    if not isinstance(sort_key, str):
+        sort_key = 'i'
+    sort_direction = args.get('sd')
+    if not isinstance(sort_direction, str):
+        sort_direction = 'a'
+
+    questions = repo.get_with_filters(id_list=id_list,
+                                      start_record=start,
+                                      num_records=num,
+                                      question_filter=question_filter,
+                                      answer_filter=answer_filter,
+                                      distractor_filter=distractor_filter,
+                                      sort_key=sort_key,
+                                      sort_descending=(sort_direction.lower() == 'd'))
+    return questions
