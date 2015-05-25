@@ -38,6 +38,7 @@ def get_some_questions(id_numbers):
 
 
 @app.route('/questions/', methods=['GET'])
+@ac.crossdomain(origin='*')
 def get_all_questions():
     """
     Returns all available questions in JSON format (the default), or in csv format.
@@ -50,6 +51,7 @@ def get_all_questions():
 
 
 @app.route('/questions/', methods=['POST'])
+@ac.crossdomain(origin='*')
 def create_question():
     """
     Allows creation of a new question, given a JSON payload.
@@ -63,6 +65,7 @@ def create_question():
 
 
 @app.route('/questions/<id_number>/', methods=['PUT'])
+@ac.crossdomain(origin='*')
 def edit_question(id_number):
     """
     Changes the data for a question given an ID and a JSON payload.  Returns the edited
@@ -82,6 +85,7 @@ def edit_question(id_number):
 
 
 @app.route('/questions/<id_number>/', methods=['DELETE'])
+@ac.crossdomain(origin='*')
 def remove_question(id_number):
     """
     Removes the given question from the repository.
