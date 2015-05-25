@@ -9,7 +9,7 @@ requirejs.config({
         'bootstrap': ['http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min'],
         'angular': ['http://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min'],
         'angular-route': ['http://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular-route.min'],
-        'angularAMD': ['lib/angularAMD']
+        'angularAMD': ['libs/angularAMD']
     },
 
     shim: {
@@ -21,8 +21,8 @@ requirejs.config({
     deps: ['angularModule']
 });
 
-requirejs(['jquery', 'bootstrap', 'angular', 'driver','angularAMD'], function($, Bootstrap, Angular, Driver, AA) {
-    console.log("Loaded :)");    
+requirejs(['jquery', 'bootstrap', 'angular', 'angular-route', 'angularAMD'], function() {
+    console.log("All modules loaded.");    
     return {};
 });
 

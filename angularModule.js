@@ -11,11 +11,11 @@ define(['angularAMD', 'angular-route'], function (angularAMD) {
     questionModule.controller('questionsController', function($scope) {
         $scope.questionsList = [
             {
-                question: 'Why doesn''t AngularJS support AMD modules?',
-                answer: 'They didn''t want to.',
+                question: 'Why doesn\'t AngularJS support AMD modules?',
+                answer: 'They didn\'t want to.',
                 distractors: [
-                    'AMD modules weren''t invented yet.',
-                    'AMD modules are evil.'
+                    'AMD modules weren\'t invented yet.',
+                    'AMD modules are evil.',
                     'Rick Astley.'
                 ]
             },
@@ -24,7 +24,7 @@ define(['angularAMD', 'angular-route'], function (angularAMD) {
                 answer: 'In my pocket.',
                 distractors: [
                     'In the car.',
-                    'On the shelf.'
+                    'On the shelf.',
                     'In the toaster.'
                 ]
             },            
