@@ -8,6 +8,7 @@ from flask import request
 from flask import abort
 import questions as q
 import testapphelper as h
+import access_control as ac
 
 app = Flask(__name__)
 
@@ -23,6 +24,7 @@ def initialize():
 
 
 @app.route('/questions/<id_numbers>/', methods=['GET'])
+@ac.crossdomain(origin='*')
 def get_some_questions(id_numbers):
     """
     Returns questions matching the given IDs in JSON format (the default), or in csv format.
